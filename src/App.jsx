@@ -3,6 +3,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import './App.css';
+import { motion } from "framer-motion";
 
 const App = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -13,6 +14,7 @@ const App = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [cart, setCart] = useState([]);
   const [showOrderForm, setShowOrderForm] = useState(false);
+  
   const [userDetails, setUserDetails] = useState({ name: "", contact: "", date: "", time: "" });
 
   useEffect(() => {
@@ -92,7 +94,7 @@ const App = () => {
       };
 
       const response = await axios.post("http://localhost:2025/placeorder", payload);
-      if (response.status === 200) {
+      if (response.status == 200) {
         toast.success("Order placed successfully!");
         setCart([]);
         setUserDetails({ name: "", contact: "", date: "", time: "" });
@@ -109,15 +111,16 @@ const App = () => {
   const totalAmount = cart.reduce((sum, item) => sum + item.menu_price * item.quantity, 0);
 
   return (
-    <div className="app-container">
+    <div >
       <ToastContainer />
       <header className="header">
         <h1>Delicious Bites</h1>
         <p>Savor the Flavor, Enjoy the Moment</p>
+       
       </header>
 
       <div className="view-cart-bubble" onClick={() => setShowOrderForm(!showOrderForm)}>
-        🛒 View Cart ({cart.length})
+        🛒 Cart <span className="cart-count">{cart.length}</span>
       </div>
 
       <section className="category-section">
@@ -152,7 +155,15 @@ const App = () => {
                 .map((item, idx) => {
                   const qty = getCartQuantity(item.menu_name);
                   return (
-                    <div key={idx} className="menu-card">
+                    <motion.div
+                      key={idx}
+                      className="menu-card"
+                      whileHover={{ scale: 1.03 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      {item.image && <img src={item.image} alt={item.menu_name} className="menu-image" />}
                       <h5>{item.menu_name}</h5>
                       <p>₹{item.menu_price}</p>
                       <div className="qty-buttons">
@@ -161,7 +172,7 @@ const App = () => {
                         <button onClick={() => addToCart(item)}>+</button>
                       </div>
                       {qty > 0 && <p className="cart-qty-display">Qty in Cart: {qty}</p>}
-                    </div>
+                    </motion.div>
                   );
                 })}
             </div>
@@ -170,7 +181,11 @@ const App = () => {
       )}
 
       {showOrderForm && (
-        <div className="cart-popup">
+        <motion.div
+          className="cart-popup"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h4>Your Cart</h4>
           {cart.length === 0 ? (
             <p>No items in cart</p>
@@ -199,7 +214,7 @@ const App = () => {
               </div>
             </>
           )}
-        </div>
+        </motion.div>
       )}
 
       <footer className="footer">
