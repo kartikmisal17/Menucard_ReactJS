@@ -14,8 +14,13 @@ const App = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [cart, setCart] = useState([]);
   const [showOrderForm, setShowOrderForm] = useState(false);
-  
-  const [userDetails, setUserDetails] = useState({ name: "", contact: "", date: "", time: "" });
+
+  const [userDetails, setUserDetails] = useState({
+    name: "",
+    contact: "",
+    date: "",
+    time: "",
+  });
 
   useEffect(() => {
     fetchMenu();
@@ -26,7 +31,9 @@ const App = () => {
   const fetchMenu = async () => {
     try {
       const response = await axios.get("http://localhost:2025/menucard");
-      const sortedMenu = response.data.menu.sort((a, b) => a.food_category.localeCompare(b.food_category));
+      const sortedMenu = response.data.menu.sort((a, b) =>
+        a.food_category.localeCompare(b.food_category)
+      );
       const categorized = {};
       sortedMenu.forEach((item) => {
         if (!categorized[item.food_category]) {
@@ -42,15 +49,25 @@ const App = () => {
     }
   };
 
-  const handleSearch = (e) => setSearchQuery(e.target.value.toLowerCase());
-  const handleScroll = () => setShowScrollTop(window.scrollY > 300);
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleScroll = () => {
+    setShowScrollTop(window.scrollY > 300);
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
 
   const addToCart = (item) => {
     const exists = cart.find((i) => i.menu_name === item.menu_name);
     if (exists) {
       const updated = cart.map((i) =>
-        i.menu_name === item.menu_name ? { ...i, quantity: i.quantity + 1 } : i
+        i.menu_name === item.menu_name
+          ? { ...i, quantity: i.quantity + 1 }
+          : i
       );
       setCart(updated);
     } else {
@@ -62,7 +79,9 @@ const App = () => {
   const updateQuantity = (item, delta) => {
     const updated = cart
       .map((i) =>
-        i.menu_name === item.menu_name ? { ...i, quantity: i.quantity + delta } : i
+        i.menu_name === item.menu_name
+          ? { ...i, quantity: i.quantity + delta }
+          : i
       )
       .filter((i) => i.quantity > 0);
     setCart(updated);
@@ -74,23 +93,24 @@ const App = () => {
   };
 
   const handleOrder = async () => {
-    if (!userDetails.name || !userDetails.contact || !userDetails.date || !userDetails.time) {
+    const { name, contact, date, time } = userDetails;
+    if (!name || !contact || !date || !time) {
       toast.error("Please fill all details");
       return;
     }
 
     try {
       const payload = {
-        name: userDetails.name,
-        contact: userDetails.contact,
-        date: userDetails.date,
-        time: userDetails.time,
-        cart: cart.map(item => ({
+        name,
+        contact,
+        date,
+        time,
+        cart: cart.map((item) => ({
           mid: item.mid,
           menu_name: item.menu_name,
           quantity: item.quantity,
-          menu_price: item.menu_price
-        }))
+          menu_price: item.menu_price,
+        })),
       };
 
       const response = await axios.post("http://localhost:2025/placeorder", payload);
@@ -103,20 +123,22 @@ const App = () => {
         toast.error("Failed to place order!");
       }
     } catch (error) {
-      console.error("Place order error:", error);
+      console.error("Order error:", error);
       toast.error("Error placing order");
     }
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + item.menu_price * item.quantity, 0);
+  const totalAmount = cart.reduce(
+    (sum, item) => sum + item.menu_price * item.quantity,
+    0
+  );
 
   return (
-    <div >
+    <div>
       <ToastContainer />
       <header className="header">
         <h1>Delicious Bites</h1>
         <p>Savor the Flavor, Enjoy the Moment</p>
-       
       </header>
 
       <div className="view-cart-bubble" onClick={() => setShowOrderForm(!showOrderForm)}>
@@ -147,11 +169,13 @@ const App = () => {
           </div>
 
           {loading ? (
-            <p className="text-center fw-bold text-primary">Loading Menu...</p>
+            <p className="text-center">Loading Menu...</p>
           ) : (
             <div className="menu-grid">
               {categorizedMenu[activeCategory]
-                .filter((item) => item.menu_name.toLowerCase().includes(searchQuery))
+                .filter((item) =>
+                  item.menu_name.toLowerCase().includes(searchQuery)
+                )
                 .map((item, idx) => {
                   const qty = getCartQuantity(item.menu_name);
                   return (
@@ -161,17 +185,30 @@ const App = () => {
                       whileHover={{ scale: 1.03 }}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
+                      transition={{ duration: 0.4 }}
                     >
-                      {item.image && <img src={item.image} alt={item.menu_name} className="menu-image" />}
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.menu_name}
+                          className="menu-image"
+                        />
+                      )}
                       <h5>{item.menu_name}</h5>
                       <p>₹{item.menu_price}</p>
                       <div className="qty-buttons">
                         <button onClick={() => updateQuantity(item, -1)}>-</button>
-                        <button onClick={() => addToCart(item)} className="add-cart-btn">Add to Cart</button>
+                        <button
+                          onClick={() => addToCart(item)}
+                          className="add-cart-btn"
+                        >
+                          Add to Cart
+                        </button>
                         <button onClick={() => addToCart(item)}>+</button>
                       </div>
-                      {qty > 0 && <p className="cart-qty-display">Qty in Cart: {qty}</p>}
+                      {qty > 0 && (
+                        <p className="cart-qty-display">Qty in Cart: {qty}</p>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -206,11 +243,39 @@ const App = () => {
               </ul>
               <p className="total">Total: ₹{totalAmount}</p>
               <div className="order-form">
-                <input type="text" placeholder="Your Name" value={userDetails.name} onChange={(e) => setUserDetails({ ...userDetails, name: e.target.value })} />
-                <input type="number" placeholder="Contact Number" value={userDetails.contact} onChange={(e) => setUserDetails({ ...userDetails, contact: e.target.value })} />
-                <input type="date" value={userDetails.date} onChange={(e) => setUserDetails({ ...userDetails, date: e.target.value })} />
-                <input type="time" value={userDetails.time} onChange={(e) => setUserDetails({ ...userDetails, time: e.target.value })} />
-                <button onClick={handleOrder} className="btn btn-success">Place Order</button>
+                <input
+                  type="text"
+                  placeholder="Your Name"
+                  value={userDetails.name}
+                  onChange={(e) =>
+                    setUserDetails({ ...userDetails, name: e.target.value })
+                  }
+                />
+                <input
+                  type="number"
+                  placeholder="Contact Number"
+                  value={userDetails.contact}
+                  onChange={(e) =>
+                    setUserDetails({ ...userDetails, contact: e.target.value })
+                  }
+                />
+                <input
+                  type="date"
+                  value={userDetails.date}
+                  onChange={(e) =>
+                    setUserDetails({ ...userDetails, date: e.target.value })
+                  }
+                />
+                <input
+                  type="time"
+                  value={userDetails.time}
+                  onChange={(e) =>
+                    setUserDetails({ ...userDetails, time: e.target.value })
+                  }
+                />
+                <button onClick={handleOrder} className="btn btn-success">
+                  Place Order
+                </button>
               </div>
             </>
           )}
@@ -222,7 +287,9 @@ const App = () => {
       </footer>
 
       {showScrollTop && (
-        <button onClick={scrollToTop} className="scroll-to-top">↑</button>
+        <button onClick={scrollToTop} className="scroll-to-top">
+          ↑
+        </button>
       )}
     </div>
   );
