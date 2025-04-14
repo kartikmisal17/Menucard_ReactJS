@@ -25,14 +25,14 @@ body.dark {
 
 .header {
   text-align: center;
-  background: linear-gradient(90deg, #ff7e5f, #feb47b);
-  color: white;
+  background: linear-gradient(to right, #ff416c, #ff4b2b) !important;
   padding: 2rem 1rem;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   animation: fadeInDown 1s ease-in-out;
   position: relative;
 }
+
 
 .dark-toggle {
   position: absolute;
@@ -93,7 +93,7 @@ body.dark .dark-toggle {
 
 .category-button:hover {
   transform: scale(1.1);
-  background-color: #ff7e5f;
+  background: linear-gradient(to right, #ff5079, #ff6c53) !important;
   color: white;
 }
 
