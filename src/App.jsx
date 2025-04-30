@@ -74,9 +74,7 @@ const App = () => {
     }
   };
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value.toLowerCase());
-  };
+  const handleSearch = (e) => setSearchQuery(e.target.value.toLowerCase());
 
   const addToCart = (item) => {
     const quantityType = item.quantity || "N/A";
@@ -114,7 +112,92 @@ const App = () => {
     return item ? item.quantity : 0;
   };
 
+  const totalAmount = cart.reduce(
+    (sum, item) => sum + item.menu_price * item.quantity,
+    0
+  );
 
+  const generateReceiptPDF = async () => {
+    const { name, contact, date, time, cottage_id } = userDetails;
+    const cottage = cottages.find((c) => c.id.toString() === cottage_id);
+    const cottageText = cottage ? `${cottage.name}` : "N/A";
+  
+    const div = document.createElement("div");
+    div.id = "receipt-content";
+    div.style.width = "280px";
+    div.style.padding = "10px";
+    div.style.fontFamily = "Arial";
+    div.innerHTML = `
+      <div style="font-size: 12px;">
+        <h2 style="text-align:center; margin:0;">Royal Bee Retreat</h2>
+        <h3 style="text-align:center; margin:5px 0;">🍽️ Your Order Details</h3>
+        <hr />
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Contact:</strong> ${contact}</p>
+        <p><strong>Cottage:</strong> ${cottageText}</p>
+        <p><strong>Date:</strong> ${date}</p>
+        <p><strong>Time:</strong> ${time}</p>
+        <hr />
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th align="left">Item</th>
+              <th align="center">Qty</th>
+              <th align="right">Price</th>
+              <th align="right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cart
+              .map(
+                (item) => `
+                <tr>
+                  <td>${item.menu_name}</td>
+                  <td align="center">${item.quantity}</td>
+                  <td align="right">₹${item.menu_price}</td>
+                  <td align="right">₹${item.menu_price * item.quantity}</td>
+                </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <hr />
+        <p style="text-align:right;"><strong>Total: ₹${totalAmount}</strong></p>
+        <p style="text-align:center;">Enjoy your stay at Royal Bee Retreat!</p>
+      </div>
+    `;
+  
+    document.body.appendChild(div);
+  
+    try {
+      const canvas = await html2canvas(div);
+      const imgData = canvas.toDataURL("image/png");
+  
+      const pdfWidth = 280;
+      const pdfHeight = canvas.height * (pdfWidth / canvas.width);
+  
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: [pdfWidth, pdfHeight],
+      });
+  
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  
+      const safe = (str) =>
+        String(str).replace(/\s+/g, "").replace(/[^\w\d]/g, "");
+  
+      const fileName = `${safe(name)}_${safe(contact)}_${cottage ? safe(cottage.name) : "NOCottage"}.pdf`;
+  
+      pdf.save(fileName);
+    } catch (error) {
+      console.error("Receipt error:", error);
+      toast.error("Failed to generate receipt");
+    }
+  
+    document.body.removeChild(div);
+  };
+  
 
   const handleOrder = async () => {
     const { name, contact, date, time, cottage_id } = userDetails;
@@ -126,14 +209,13 @@ const App = () => {
       toast.error("Contact number must be exactly 10 digits");
       return;
     }
+
     try {
-     
       const payload = {
         name,
         contact,
         date,
         time,
-    
         cart: cart.map((item) => ({
           mid: item.mid,
           menu_name: item.menu_name,
@@ -147,7 +229,7 @@ const App = () => {
       const response = await axios.post("http://localhost:2025/placeorder", payload);
       if (response.status === 200) {
         toast.success("Order placed successfully!");
-       
+        await generateReceiptPDF();
         setCart([]);
         setUserDetails({
           name: "",
@@ -162,13 +244,9 @@ const App = () => {
       }
     } catch (error) {
       console.error("Order error:", error);
+      toast.error("Failed to place order");
     }
   };
-
-  const totalAmount = cart.reduce(
-    (sum, item) => sum + item.menu_price * item.quantity,
-    0
-  );
 
   return (
     <div>
@@ -262,7 +340,7 @@ const App = () => {
                 <select value={userDetails.cottage_id} onChange={(e) => setUserDetails({ ...userDetails, cottage_id: e.target.value })}>
                   <option value="">Select Cottage</option>
                   {cottages.map((cottage) => (
-                    <option key={cottage.id} value={cottage.id}>{cottage.name}</option>
+                    <option key={cottage.id} value={cottage.id}>{cottage.name} ({cottage.location})</option>
                   ))}
                 </select>
                 <input type="date" value={userDetails.date} min={getTodayDate()} onChange={(e) => setUserDetails({ ...userDetails, date: e.target.value })} />
