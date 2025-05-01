@@ -34,8 +34,6 @@ const App = () => {
   const [userDetails, setUserDetails] = useState({
     name: "",
     contact: "",
-    date: getTodayDate(),
-    time: getCurrentTime(),
     cottage_id: "",
   });
 
@@ -118,10 +116,12 @@ const App = () => {
   );
 
   const generateReceiptPDF = async () => {
-    const { name, contact, date, time, cottage_id } = userDetails;
+    const { name, contact, cottage_id } = userDetails;
+    const date = getTodayDate();
+    const time = getCurrentTime();
     const cottage = cottages.find((c) => c.id.toString() === cottage_id);
     const cottageText = cottage ? `${cottage.name}` : "N/A";
-  
+
     const div = document.createElement("div");
     div.id = "receipt-content";
     div.style.width = "280px";
@@ -166,42 +166,44 @@ const App = () => {
         <p style="text-align:center;">Enjoy your stay at Royal Bee Retreat!</p>
       </div>
     `;
-  
+
     document.body.appendChild(div);
-  
+
     try {
       const canvas = await html2canvas(div);
       const imgData = canvas.toDataURL("image/png");
-  
+
       const pdfWidth = 280;
       const pdfHeight = canvas.height * (pdfWidth / canvas.width);
-  
+
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "pt",
         format: [pdfWidth, pdfHeight],
       });
-  
+
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-  
+
       const safe = (str) =>
         String(str).replace(/\s+/g, "").replace(/[^\w\d]/g, "");
-  
+
       const fileName = `${safe(name)}_${safe(contact)}_${cottage ? safe(cottage.name) : "NOCottage"}.pdf`;
-  
+
       pdf.save(fileName);
     } catch (error) {
       console.error("Receipt error:", error);
       toast.error("Failed to generate receipt");
     }
-  
+
     document.body.removeChild(div);
   };
-  
 
   const handleOrder = async () => {
-    const { name, contact, date, time, cottage_id } = userDetails;
-    if (!name || !contact || !date || !time || !cottage_id) {
+    const { name, contact, cottage_id } = userDetails;
+    const date = getTodayDate();
+    const time = getCurrentTime();
+
+    if (!name || !contact || !cottage_id) {
       toast.error("Please fill all details");
       return;
     }
@@ -234,8 +236,6 @@ const App = () => {
         setUserDetails({
           name: "",
           contact: "",
-          date: getTodayDate(),
-          time: getCurrentTime(),
           cottage_id: "",
         });
         setShowOrderForm(false);
@@ -343,8 +343,6 @@ const App = () => {
                     <option key={cottage.id} value={cottage.id}>{cottage.name} ({cottage.location})</option>
                   ))}
                 </select>
-                <input type="date" value={userDetails.date} min={getTodayDate()} onChange={(e) => setUserDetails({ ...userDetails, date: e.target.value })} />
-                <input type="time" value={userDetails.time} onChange={(e) => setUserDetails({ ...userDetails, time: e.target.value })} />
                 <button onClick={handleOrder} className="btn btn-success">Place Order</button>
               </div>
             </>
